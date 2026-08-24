@@ -1,0 +1,2 @@
+Sector,Species,State,Farm_Age_Years,Farm_Area_Acres,Water_Temperature_C,Water_pH,Dissolved_Oxygen_mg_L,Ammonia_mg_L,Stocking_Density_Animals_Per_Acre,Feed_Quantity_kg_Per_Day,Feed_Quality_Score,Rainfall_mm,Humidity_Percent,Body_Condition_Score,Disease_Type,Disease_Onset,Mortality_Rate_Percent,Feed_Conversion_Ratio,Daily_Feed_Cost,Productivity_Score,Water_Quality_Score,Disease_Risk_Score
+Aquaculture,Pangasius,West Bengal,1,7.6,24.8,7.15,5.25,0.19,114.8,101.9,93.5,23.2,69.2,2.8,Bacterial Infection,1,10.6,2.16,114.7,100.0,79.4,75.2
