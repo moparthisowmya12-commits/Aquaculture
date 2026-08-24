@@ -1,11 +1,10 @@
 import streamlit as st
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
+
 
 st.set_page_config(page_title="Aquaculture & Livestock Disease Risk", page_icon="🐟", layout="wide")
 
