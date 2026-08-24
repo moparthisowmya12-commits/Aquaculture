@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
-from scikit-learn.compose import ColumnTransformer
-from scikit-learn.pipeline import Pipeline
-from scikit-learn.preprocessing import OneHotEncoder
-from scikit-learn.ensemble import RandomForestClassifier
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.ensemble import RandomForestClassifier
 
 
 st.set_page_config(page_title="Aquaculture & Livestock Disease Risk", page_icon="🐟", layout="wide")
