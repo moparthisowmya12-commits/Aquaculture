@@ -1,134 +1,117 @@
 import streamlit as st
+import joblib
 import pandas as pd
 
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.ensemble import RandomForestClassifier
-
-
-st.set_page_config(page_title="Aquaculture & Livestock Disease Risk", page_icon="🐟", layout="wide")
+st.set_page_config(page_title="Disease Risk Prediction", page_icon="🐟")
 
 st.title("🐟 Aquaculture & Livestock Disease Risk Prediction")
-st.write("Upload the CSV dataset, train the model, and predict the disease-risk level.")
+st.write("Enter the required parameters to predict disease-risk level.")
 
-# Default dataset filename
-DEFAULT_FILE = "aquaculture_livestock_disease_feed_optimization_dataset(5).csv"
+# Load trained model
+model = joblib.load("aquaculture_livestock_best_model.pkl")
 
-uploaded_file = st.file_uploader("Upload your CSV dataset", type=["csv"])
+# Sector selection
+sector = st.selectbox(
+    "Select Sector",
+    ["Aquaculture", "Livestock"]
+)
 
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
+st.subheader("Enter Parameters")
+
+if sector == "Aquaculture":
+
+    water_temperature = st.number_input(
+        "Water Temperature (°C)",
+        min_value=0.0,
+        max_value=50.0,
+        value=25.0
+    )
+
+    ph_level = st.number_input(
+        "pH Level",
+        min_value=0.0,
+        max_value=14.0,
+        value=7.0
+    )
+
+    dissolved_oxygen = st.number_input(
+        "Dissolved Oxygen (mg/L)",
+        min_value=0.0,
+        max_value=20.0,
+        value=6.0
+    )
+
+    fish_count = st.number_input(
+        "Fish Count",
+        min_value=1,
+        value=100
+    )
+
+    feed_quantity = st.number_input(
+        "Feed Quantity (kg/day)",
+        min_value=0.0,
+        value=5.0
+    )
+
+    rainfall = st.number_input(
+        "Rainfall (mm)",
+        min_value=0.0,
+        value=10.0
+    )
+
+    input_data = pd.DataFrame([{
+        "WaterTemperature": water_temperature,
+        "PH": ph_level,
+        "DissolvedOxygen": dissolved_oxygen,
+        "FishCount": fish_count,
+        "FeedQuantity": feed_quantity,
+        "Rainfall": rainfall
+    }])
+
 else:
-    try:
-        df = pd.read_csv(DEFAULT_FILE)
-    except FileNotFoundError:
-        st.info(f"Please upload `{DEFAULT_FILE}` using the uploader above.")
-        st.stop()
 
-st.success(f"Dataset loaded: {df.shape[0]} rows × {df.shape[1]} columns")
+    animal_count = st.number_input(
+        "Animal Count",
+        min_value=1,
+        value=10
+    )
 
-target = "Disease_Risk_Level"
+    animal_age = st.number_input(
+        "Animal Age (months)",
+        min_value=0,
+        value=12
+    )
 
-if target not in df.columns:
-    st.error(f"Target column `{target}` was not found in the dataset.")
-    st.stop()
+    body_temperature = st.number_input(
+        "Body Temperature (°C)",
+        min_value=30.0,
+        max_value=45.0,
+        value=38.5
+    )
 
-# Remove ID column because it is not useful for prediction
-drop_cols = [c for c in ["Farm_ID", target] if c in df.columns]
-X = df.drop(columns=drop_cols)
-y = df[target].astype(str)
+    feed_quantity = st.number_input(
+        "Feed Quantity (kg/day)",
+        min_value=0.0,
+        value=5.0
+    )
 
-# Separate numeric and categorical columns
-numeric_cols = X.select_dtypes(include=["number"]).columns.tolist()
-categorical_cols = X.select_dtypes(exclude=["number"]).columns.tolist()
+    rainfall = st.number_input(
+        "Rainfall (mm)",
+        min_value=0.0,
+        value=10.0
+    )
 
-preprocessor = ColumnTransformer(
-    transformers=[
-        ("num", "passthrough", numeric_cols),
-        ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_cols),
-    ]
-)
+    input_data = pd.DataFrame([{
+        "AnimalCount": animal_count,
+        "AnimalAge": animal_age,
+        "BodyTemperature": body_temperature,
+        "FeedQuantity": feed_quantity,
+        "Rainfall": rainfall
+    }])
 
-model = Pipeline(
-    steps=[
-        ("preprocessor", preprocessor),
-        ("classifier", RandomForestClassifier(
-            n_estimators=300,
-            random_state=42,
-            class_weight="balanced"
-        )),
-    ]
-)
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.20, random_state=42, stratify=y
-)
+if st.button("🔍 Predict Disease Risk"):
 
-with st.spinner("Training model..."):
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
+    prediction = model.predict(input_data)
 
-st.metric("Model Accuracy", f"{accuracy * 100:.2f}%")
-
-st.divider()
-st.subheader("🔮 Predict Disease Risk")
-
-# Create input widgets from the dataset columns
-input_data = {}
-
-for col in X.columns:
-    if col in categorical_cols:
-        values = sorted(X[col].dropna().astype(str).unique().tolist())
-        input_data[col] = st.selectbox(col, values)
-    else:
-        value = float(X[col].median())
-        min_value = float(X[col].min())
-        max_value = float(X[col].max())
-
-        if min_value == max_value:
-            input_data[col] = value
-        else:
-            input_data[col] = st.number_input(
-                col,
-                min_value=min_value,
-                max_value=max_value,
-                value=value
-            )
-
-if st.button("Predict Disease Risk", type="primary"):
-    input_df = pd.DataFrame([input_data])
-
-    try:
-        prediction = model.predict(input_df)[0]
-        probabilities = model.predict_proba(input_df)[0]
-        classes = model.named_steps["classifier"].classes_
-
-        st.success(f"Predicted Disease Risk Level: **{prediction}**")
-
-        probability_df = pd.DataFrame({
-            "Risk Level": classes,
-            "Probability": probabilities
-        }).sort_values("Probability", ascending=False)
-
-        st.dataframe(
-            probability_df.style.format({"Probability": "{:.2%}"}),
-            use_container_width=True
-        )
-
-    except Exception as e:
-        st.error(f"Prediction error: {e}")
-
-st.divider()
-st.subheader("📊 Dataset Preview")
-st.dataframe(df.head(20), use_container_width=True)
-
-# Download the dataset from the Streamlit app
-csv_data = df.to_csv(index=False).encode("utf-8")
-st.download_button(
-    label="⬇️ Download Dataset",
-    data=csv_data,
-    file_name="aquaculture_livestock_disease_feed_optimization_dataset.csv",
-    mime="text/csv"
-)
+    st.success(f"Predicted Disease Risk: {prediction[0]}")
